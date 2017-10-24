@@ -1,0 +1,322 @@
+diff --git a/gcc-6.2.0/gcc/testsuite/g++.dg/pr77728-1.C b/gcc-6.2.0/gcc/testsuite/g++.dg/pr77728-1.C
+new file mode 100644
+index 0000000..05f08c9
+--- /dev/null
++++ b/gcc-6.2.0/gcc/testsuite/g++.dg/pr77728-1.C
+@@ -0,0 +1,171 @@
++// { dg-do compile { target arm_eabi } }
++// { dg-options "-Wpsabi" }
++
++#include <stdarg.h>
++
++template <int N>
++struct A { double p; };
++
++A<0> v;
++
++template <int N>
++struct B
++{
++  typedef A<N> T;
++  int i, j;
++};
++
++struct C : public B<0> {};
++struct D {};
++struct E : public D, C {};
++struct F : public B<1> {};
++struct G : public F { static double y; };
++struct H : public G {};
++struct I : public D { long long z; };
++struct J : public D { static double z; int i, j; };
++
++template <int N>
++struct K : public D { typedef A<N> T; int i, j; };
++
++struct L { static double h; int i, j; };
++
++int
++fn1 (int a, B<0> b)	// { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" }
++{
++  return a + b.i;
++}
++
++int
++fn2 (int a, B<1> b)
++{
++  return a + b.i;
++}
++
++int
++fn3 (int a, L b)	// { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" }
++{
++  return a + b.i;
++}
++
++int
++fn4 (int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, B<0> n, ...)
++// { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" "" { target *-*-* } .-1 }
++{
++  va_list ap;
++  va_start (ap, n);
++  int x = va_arg (ap, int);
++  va_end (ap);
++  return x;
++}
++
++int
++fn5 (int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, B<1> n, ...)
++{
++  va_list ap;
++  va_start (ap, n);
++  int x = va_arg (ap, int);
++  va_end (ap);
++  return x;
++}
++
++int
++fn6 (int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, C n, ...)
++{
++  va_list ap;
++  va_start (ap, n);
++  int x = va_arg (ap, int);
++  va_end (ap);
++  return x;
++}
++
++int
++fn7 (int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, E n, ...)
++{
++  va_list ap;
++  va_start (ap, n);
++  int x = va_arg (ap, int);
++  va_end (ap);
++  return x;
++}
++
++int
++fn8 (int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, H n, ...)
++{
++  va_list ap;
++  va_start (ap, n);
++  int x = va_arg (ap, int);
++  va_end (ap);
++  return x;
++}
++
++int
++fn9 (int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, I n, ...)
++{
++  va_list ap;
++  va_start (ap, n);
++  int x = va_arg (ap, int);
++  va_end (ap);
++  return x;
++}
++
++int
++fn10 (int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, J n, ...)
++// { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" "" { target *-*-* } .-1 }
++{
++  va_list ap;
++  va_start (ap, n);
++  int x = va_arg (ap, int);
++  va_end (ap);
++  return x;
++}
++
++int
++fn11 (int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, K<0> n, ...)
++// { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" "" { target *-*-* } .-1 }
++{
++  va_list ap;
++  va_start (ap, n);
++  int x = va_arg (ap, int);
++  va_end (ap);
++  return x;
++}
++
++int
++fn12 (int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, K<2> n, ...)
++{
++  va_list ap;
++  va_start (ap, n);
++  int x = va_arg (ap, int);
++  va_end (ap);
++  return x;
++}
++
++void
++test ()
++{
++  static B<0> b0;
++  static B<1> b1;
++  static L l;
++  static C c;
++  static E e;
++  static H h;
++  static I i;
++  static J j;
++  static K<0> k0;
++  static K<2> k2;
++  fn1 (1, b0);	// { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" }
++  fn2 (1, b1);
++  fn3 (1, l);	// { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" }
++  fn4 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, b0, 1, 2, 3, 4);
++  // { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" "" { target *-*-* } .-1 }
++  fn5 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, b1, 1, 2, 3, 4);
++  fn6 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, c, 1, 2, 3, 4);
++  fn7 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, e, 1, 2, 3, 4);
++  fn8 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, h, 1, 2, 3, 4);
++  fn9 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, i, 1, 2, 3, 4);
++  fn10 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, j, 1, 2, 3, 4);
++  // { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" "" { target *-*-* } .-1 }
++  fn11 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, k0, 1, 2, 3, 4);
++  // { dg-message "note: parameter passing for argument of type \[^\n\r]* changed in GCC 7\.1" "" { target *-*-* } .-1 }
++  fn12 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, k2, 1, 2, 3, 4);
++}
+diff --git a/gcc-6.2.0/gcc/config/arm/arm.c~ b/gcc-6.2.0/gcc/config/arm/arm.c
+index 24b204a..0395961 100644
+--- a/gcc-6.2.0/gcc/config/arm/arm.c~
++++ b/gcc-6.2.0/gcc/config/arm/arm.c
+@@ -61,6 +61,7 @@
+ #include "builtins.h"
+ #include "tm-constrs.h"
+ #include "rtl-iter.h"
++#include "gimple.h"
+ 
+ /* This file should be included last.  */
+ #include "target-def.h"
+@@ -78,7 +79,7 @@ struct four_ints
+ 
+ /* Forward function declarations.  */
+ static bool arm_const_not_ok_for_debug_p (rtx);
+-static bool arm_needs_doubleword_align (machine_mode, const_tree);
++static int arm_needs_doubleword_align (machine_mode, const_tree);
+ static int arm_compute_static_chain_stack_bytes (void);
+ static arm_stack_offsets *arm_get_frame_offsets (void);
+ static void arm_add_gc_roots (void);
+@@ -6133,8 +6134,20 @@ aapcs_layout_arg (CUMULATIVE_ARGS *pcum, machine_mode mode,
+   /* C3 - For double-word aligned arguments, round the NCRN up to the
+      next even number.  */
+   ncrn = pcum->aapcs_ncrn;
+-  if ((ncrn & 1) && arm_needs_doubleword_align (mode, type))
+-    ncrn++;
++  if (ncrn & 1)
++    {
++      int res = arm_needs_doubleword_align (mode, type);
++      /* Only warn during RTL expansion of call stmts, otherwise we would
++	 warn e.g. during gimplification even on functions that will be
++	 always inlined, and we'd warn multiple times.  Don't warn when
++	 called in expand_function_start either, as we warn instead in
++	 arm_function_arg_boundary in that case.  */
++      if (res < 0 && warn_psabi && currently_expanding_gimple_stmt)
++	inform (input_location, "parameter passing for argument of type "
++		"%qT changed in GCC 7.1", type);
++      else if (res > 0)
++	ncrn++;
++    }
+ 
+   nregs = ARM_NUM_REGS2(mode, type);
+ 
+@@ -6239,12 +6252,16 @@ arm_init_cumulative_args (CUMULATIVE_ARGS *pcum, tree fntype,
+     }
+ }
+ 
+-/* Return true if mode/type need doubleword alignment.  */
+-static bool
++/* Return 1 if double word alignment is required for argument passing.
++   Return -1 if double word alignment used to be required for argument
++   passing before PR77728 ABI fix, but is not required anymore.
++   Return 0 if double word alignment is not required and wasn't requried
++   before either.  */
++static int
+ arm_needs_doubleword_align (machine_mode mode, const_tree type)
+ {
+   if (!type)
+-    return PARM_BOUNDARY < GET_MODE_ALIGNMENT (mode);
++    return GET_MODE_ALIGNMENT (mode) > PARM_BOUNDARY;
+ 
+   /* Scalar and vector types: Use natural alignment, i.e. of base type.  */
+   if (!AGGREGATE_TYPE_P (type))
+@@ -6254,12 +6271,21 @@ arm_needs_doubleword_align (machine_mode mode, const_tree type)
+   if (TREE_CODE (type) == ARRAY_TYPE)
+     return TYPE_ALIGN (TREE_TYPE (type)) > PARM_BOUNDARY;
+ 
++  int ret = 0;
+   /* Record/aggregate types: Use greatest member alignment of any member.  */ 
+   for (tree field = TYPE_FIELDS (type); field; field = DECL_CHAIN (field))
+     if (DECL_ALIGN (field) > PARM_BOUNDARY)
+-      return true;
++      {
++	if (TREE_CODE (field) == FIELD_DECL)
++	  return 1;
++	else
++	  /* Before PR77728 fix, we were incorrectly considering also
++	     other aggregate fields, like VAR_DECLs, TYPE_DECLs etc.
++	     Make sure we can warn about that with -Wpsabi.  */
++	  ret = -1;
++      }
+ 
+-  return false;
++  return ret;
+ }
+ 
+ 
+@@ -6316,10 +6342,15 @@ arm_function_arg (cumulative_args_t pcum_v, machine_mode mode,
+     }
+ 
+   /* Put doubleword aligned quantities in even register pairs.  */
+-  if (pcum->nregs & 1
+-      && ARM_DOUBLEWORD_ALIGN
+-      && arm_needs_doubleword_align (mode, type))
+-    pcum->nregs++;
++  if ((pcum->nregs & 1) && ARM_DOUBLEWORD_ALIGN)
++    {
++      int res = arm_needs_doubleword_align (mode, type);
++      if (res < 0 && warn_psabi)
++	inform (input_location, "parameter passing for argument of type "
++		"%qT changed in GCC 7.1", type);
++      else if (res > 0)
++	pcum->nregs++;
++    }
+ 
+   /* Only allow splitting an arg between regs and memory if all preceding
+      args were allocated to regs.  For args passed by reference we only count
+@@ -6338,9 +6369,15 @@ arm_function_arg (cumulative_args_t pcum_v, machine_mode mode,
+ static unsigned int
+ arm_function_arg_boundary (machine_mode mode, const_tree type)
+ {
+-  return (ARM_DOUBLEWORD_ALIGN && arm_needs_doubleword_align (mode, type)
+-	  ? DOUBLEWORD_ALIGNMENT
+-	  : PARM_BOUNDARY);
++  if (!ARM_DOUBLEWORD_ALIGN)
++    return PARM_BOUNDARY;
++
++  int res = arm_needs_doubleword_align (mode, type);
++  if (res < 0 && warn_psabi)
++    inform (input_location, "parameter passing for argument of type %qT "
++	    "changed in GCC 7.1", type);
++
++  return res > 0 ? DOUBLEWORD_ALIGNMENT : PARM_BOUNDARY;
+ }
+ 
+ static int
+@@ -26376,8 +26413,15 @@ arm_setup_incoming_varargs (cumulative_args_t pcum_v,
+   if (pcum->pcs_variant <= ARM_PCS_AAPCS_LOCAL)
+     {
+       nregs = pcum->aapcs_ncrn;
+-      if ((nregs & 1) && arm_needs_doubleword_align (mode, type))
+-	nregs++;
++      if (nregs & 1)
++	{
++	  int res = arm_needs_doubleword_align (mode, type);
++	  if (res < 0 && warn_psabi)
++	    inform (input_location, "parameter passing for argument of "
++		    "type %qT changed in GCC 7.1", type);
++	  else if (res > 0)
++	    nregs++;
++	}
+     }
+   else
+     nregs = pcum->nregs;
